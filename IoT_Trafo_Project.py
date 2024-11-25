@@ -313,7 +313,7 @@ def mainLoop(thread_name, interval):
             else:
                 activeParam[0] = None     
             logging.info("D07 get data from ModBus Devices")
-            getTemp = client.read_holding_registers(0, 3, slave = 7)
+            getTemp = client.read_holding_registers(0, 3, slave = 3)
             getPLC = client.read_holding_registers(55, 4, slave = 1)
             getOil = client.read_holding_registers(54, 1, slave = 1)
             getElect1 = client.read_holding_registers(0, 29, slave = 2)
