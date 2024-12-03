@@ -8,7 +8,7 @@ joni = False
 
 def testBatch():
     getTemp = client.read_holding_registers(0, 4, slave = 7)
-    getElect = client.read_holding_registers(0, 29, slave = 2)
+    getElect = client.read_holding_registers(37, 34, slave = 2)
     getPLC = client.read_holding_registers(54, 5, slave = 1)
     writePLC = client.write_register(501, 0, slave = 1)
     writePLC = client.write_register(502, 0, slave = 1)

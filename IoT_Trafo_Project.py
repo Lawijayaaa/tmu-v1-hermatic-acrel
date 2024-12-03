@@ -141,37 +141,50 @@ def dataHandler(getTemp, getOil, getElect1, getElect2, getElect3, getHarmV, getH
         print(currentResult[0:4])
     except:
         pass
+
     try:
+        #print("handler Electrical")
         for i in range(0,3):
-            currentResult[(i*9)+6] = (PTratio * getElect1.registers[i])/100
-            currentResult[(i*9)+7] = (PTratio * getElect1.registers[i+3])/100
-            currentResult[(i*9)+8] = (CTratio * getElect1.registers[i+6])/1000
+            currentResult[(i*9)+6] = (PTratio * getElect1.registers[i])/10     #Van done
+            currentResult[(i*9)+7] = (PTratio * getElect1.registers[i+3])/10   #Vab done
+            currentResult[(i*9)+8] = getElect1.registers[i+6]  #Ian done
 
-            currentResult[(i*9)+9] = (signedInt16Handler(getElect1.registers[i+21]))/1000
-            currentResult[(i*9)+10] = (CTPTratio * signedInt16Handler(getElect1.registers[i+15]))/10
-            currentResult[(i*9)+11] = (CTPTratio * signedInt16Handler(getElect1.registers[i+18]))/10
-
-        currentResult[39] = (CTratio * getElect1.registers[9])/1000
-        currentResult[35] = ((CTPTratio * signedInt32Handler(getElect1.registers[10:12]))[0])/10
-        currentResult[36] = ((CTPTratio * signedInt32Handler(getElect1.registers[12:14]))[0])/10
-        currentResult[34] = (getElect1.registers[14])/1000
-        currentResult[38] = (getElect1.registers[24])/100
-        currentResult[40] = (unsignedInt32Handler(getElect1.registers[25:27]))/10
-        currentResult[42] = (unsignedInt32Handler(getElect1.registers[27:]))/10
-        currentResult[41] = currentResult[43] = 0
-        currentResult[33] = currentResult[8] + currentResult[17] +  currentResult[26]
+            currentResult[(i*9)+9] = (signedInt16Handler(getElect1.registers[i+17]))/1000   #PF done
+            currentResult[(i*9)+10] = (signedInt16Handler(getElect1.registers[i+9])) * 1000    #P done
+            currentResult[(i*9)+11] = (signedInt16Handler(getElect1.registers[i+13])) * 1000    #Q done
+        
+        """        
+        currentResult[18] = currentResult[18] * changeSign
+        currentResult[19] = currentResult[19] * changeSign
+        currentResult[20] = currentResult[20] * changeSign
+        currentResult[27] = currentResult[27] * changeSign
+        currentResult[28] = currentResult[28] * changeSign
+        currentResult[29] = currentResult[29] * changeSign
+        """
+        
+        currentResult[39] = 0  #Ineutral done
+        currentResult[35] = currentResult[10] + currentResult[19] + currentResult[28]    #Psum done
+        currentResult[36] = currentResult[11] + currentResult[20] + currentResult[29]   #Qsum done
+        currentResult[34] = (getElect1.registers[20])/1000              #PFsum done
+        currentResult[38] = (getElect1.registers[25])/100               #Freq done
+        currentResult[40] =  CTPTratio * (((getElect1.registers[28] * 65535) + getElect1.registers[29])/1000)  #kWh done
+        currentResult[42] =  CTPTratio * (((getElect1.registers[30] * 65536) + getElect1.registers[31])/1000)  #kVARh done
+        currentResult[41] = currentResult[43] = 0   #kwh&kvarhoutp done
+        currentResult[33] = currentResult[8] + currentResult[17] +  currentResult[26]   #Itotal done
+        #print("Check Result")
+        #print(currentResult)
+    except Exception as X:
+        print(X)
+    try:
+        for i in range(0, 3):
+            currentResult[(i*9)+12] = (getElect1.registers[i + 21]) * 1000       #S done
+        currentResult[37] = currentResult[12] + currentResult[21] + currentResult[30]   #Ssum done
     except:
         pass
     try:
         for i in range(0, 3):
-            currentResult[(i*9)+12] = CTPTratio * (getElect2.registers[i])/10
-        currentResult[37] = (unsignedInt32Handler(getElect2.registers[3:]))/10
-    except:
-        pass
-    try:
-        for i in range(0, 3):
-            currentResult[(i*9) + 13] = (getElect3.registers[i])/10
-            currentResult[(i*9) + 14] = (getElect3.registers[i+3])/10
+            currentResult[(i*9) + 13] = (getElect2.registers[i])/100             #THDi done
+            currentResult[(i*9) + 14] = (getElect2.registers[i+3])/100           #THDv done
     except:
         pass
     try:
@@ -191,8 +204,8 @@ def dataHandler(getTemp, getOil, getElect1, getElect2, getElect3, getHarmV, getH
         for i in range(0, 3):
             for j in range(0, len(harmV[i])):
                 if j % 2 == 1 :
-                    Vharm[i][harmIndex] = (harmV[i][j])/10
-                    Iharm[i][harmIndex] = (harmA[i][j])/10
+                    Vharm[i][harmIndex] = (harmV[i][j])/100
+                    Iharm[i][harmIndex] = (harmA[i][j])/100
                     harmIndex = harmIndex + 1
             harmIndex = 0
             Vharm[i].insert(0, 100)
@@ -316,15 +329,14 @@ def mainLoop(thread_name, interval):
             getTemp = client.read_holding_registers(0, 3, slave = 3)
             getPLC = client.read_holding_registers(55, 4, slave = 1)
             getOil = client.read_holding_registers(54, 1, slave = 1)
-            getElect1 = client.read_holding_registers(0, 29, slave = 2)
-            getElect2 = client.read_holding_registers(46, 5, slave = 2)
-            getElect3 = client.read_holding_registers(800, 6, slave = 2)
-            getHarmV = client.read_holding_registers(806, 90, slave = 2)
-            getHarmA = client.read_holding_registers(896, 90, slave = 2)
+            getElect1 = client.read_holding_registers(37, 34, slave = 2)
+            getElect2 = client.read_holding_registers(1024, 6, slave = 2)
+            getHarmV = client.read_holding_registers(1036, 90, slave = 2)
+            getHarmA = client.read_holding_registers(1126, 90, slave = 2)
             logging.info("D08 Handling received data")
             plcResult = [0]*5
             try:
-                newResult = dataHandler(getTemp, getOil, getElect1, getElect2, getElect3, getHarmV, getHarmA, currentResult, CTratio, PTratio)
+                newResult = dataHandler(getTemp, getOil, getElect1, getElect2, getHarmV, getHarmA, currentResult, CTratio, PTratio)
                 plcResult = plcHandler(getPLC)
                 if plcResult[4] == 500:
                     newResult[0][4:6] = plcResult[0:2]
